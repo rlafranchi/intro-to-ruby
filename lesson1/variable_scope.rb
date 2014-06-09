@@ -1,6 +1,6 @@
 # 1 Create a local variable and modify it at an inner scope (in between a do/end block). You can try
   arr = [1, 2, 3, 4, 5, 5]
-  s = 0 3 s is defined outside scope
+  s = 0 # s is defined outside scope
   # a) re-assigning the variable to something else
   arr.each do |a|
     s += a
