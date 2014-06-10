@@ -80,22 +80,51 @@ def card_count(cards)
   cards.each do |k|
     v += deck[k]
   end
+  if v > 21
+    v = 0
+    cards.each do |k|
+      if k[0] == 'A'
+        v += 1
+      else
+        v += deck[k]
+      end
+    end
+  end 
   return v
 end
 
-def deal_cards(players_cards, dealers_cards)
-  puts "----Dealer's Cards-----"
-  puts "      ------ ------   "
-  puts "      | #{dealers_cards[1]} | |    |"
-  puts "      |    | |    |"
-  puts "      ------ ------"
+def deal_cards(players_cards, dealers_cards, dealers_turn = false)
+  puts "----Dealer's Cards----"
+  
+  if dealers_turn
+    dealers_cards.each do |card|
+      puts "  ------"
+      puts "  | #{card} |"
+      puts "  |    |"
+      puts "  ------"
+    end
+    puts "Dealers total is: " + card_count(dealers_cards).to_s
+  else
+    puts "  ------"
+    puts "  | #{dealers_cards[1]} |"
+    puts "  |    |"
+    puts "  ------"
+    puts "  ------"
+    puts "  |    |"
+    puts "  |    |"
+    puts "  ------"
+  end
+
   puts "----Your Cards--------"
-  puts "      ------ ------   "
-  puts "      | #{players_cards[0]} | | #{players_cards[1]} |"
-  puts "      |    | |    |"
-  puts "      ------ ------"
-  puts "your total is: "
-  puts card_count(players_cards)
+
+  players_cards.each do |card|
+    puts "  ------"
+    puts "  | #{card} |"
+    puts "  |    |"
+    puts "  ------"
+  end
+
+  puts "your total is: " + card_count(players_cards).to_s
 end
 
 def hit_or_stand
@@ -106,34 +135,77 @@ end
   
 
 deck = create_deck
-
-shuffled_keys = shuffle_deck(deck)
-
-#deal initial cards
-players_cards = [shuffled_keys[0], shuffled_keys[2]]
-dealers_cards = [shuffled_keys[1], shuffled_keys[3]]
-
 puts "Welcome to Las Vegas"
 chip_count = buy_chips
-bet = make_bet(chip_count)
-deal_cards(players_cards, dealers_cards)
-player_card_count = card_count(players_cards)
-deck_key_count = 4
-while player_card_count < 21
-  action = hit_or_stand
-  if action == 1
-    players_cards << shuffled_keys[deck_key_count]
-    player_card_count = card_count(players_cards)
-    deal_cards(players_cards, dealers_cards)
-  else
-    break
+
+# begin playing until game_over
+begin
+  shuffled_keys = shuffle_deck(deck)
+
+  #deal initial cards
+  players_cards = [shuffled_keys[0], shuffled_keys[2]]
+  dealers_cards = [shuffled_keys[1], shuffled_keys[3]]
+
+  bet = make_bet(chip_count)
+  deal_cards(players_cards, dealers_cards)
+  player_card_count = card_count(players_cards)
+  dealer_card_count = card_count(dealers_cards)
+  deck_index = 4
+  while player_card_count < 21
+    action = hit_or_stand
+    if action == 1
+      players_cards << shuffled_keys[deck_index]
+      player_card_count = card_count(players_cards)
+      deal_cards(players_cards, dealers_cards)
+      deck_index += 1
+    else
+      break
+    end
   end
-end
 
-if player_card_count == 21
-  puts "congrats"
-elsif player_card_count > 21
-  puts "Bust"
-end
+  if player_card_count == 21
+    puts "Congrats"
+    if deck_index == 4
+      puts "BlackJack!!!"
+    end
+    while dealer_card_count < 17
+      dealers_cards << shuffled_keys[deck_index]
+      dealer_card_count = card_count(dealers_cards)
+      deck_index += 1
+    end
+    if dealer_card_count == 21
+      deal_cards(players_cards, dealers_cards, true)
+      puts "Dealer draws #{dealer_card_count}"
+      puts "It's a Tie!"
+      # chip count doesn't change
+    elsif dealer_card_count > 21
+      deal_cards(players_cards, dealers_cards, true)
+      puts "Dealer busts! You Win"
+      chip_count += 1.5 * bet
+    else
+      deal_cards(players_cards, dealers_cards, true)
+      puts "You Win"
+      chip_count += 1.5 * bet
+    end
+  elsif player_card_count > 21
+    deal_cards(players_cards, dealers_cards, true)
+    puts "Bust! Dealer shows cards"
+    chip_count -= bet
+  elsif player_card_count > dealer_card_count
+    deal_cards(players_cards, dealers_cards, true)
+    puts "You Win!"
+    chip_count += bet
+  else
+    deal_cards(players_cards, dealers_cards, true)
+    puts "You Lose! The House always wins! HaHaHa.."
 
-p players_cards
+  end
+  puts "Chip count: #{chip_count}"
+  if chip_count == 0
+    puts "You have no chips left. Come Again"
+  else
+    puts "Hand Over. Play Again? (y or n)"
+    y_n = gets.chomp
+    game_over = ( y_n == 'n' ) ? true : false
+  end
+end until game_over || chip_count == 0
