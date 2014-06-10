@@ -93,7 +93,7 @@ def card_count(cards)
   return v
 end
 
-def deal_cards(players_cards, dealers_cards, dealers_turn = false)
+def deal_cards(players_cards, dealers_cards, dealers_turn = true)
   puts "----Dealer's Cards----"
   
   if dealers_turn
@@ -147,58 +147,61 @@ begin
   dealers_cards = [shuffled_keys[1], shuffled_keys[3]]
 
   bet = make_bet(chip_count)
-  deal_cards(players_cards, dealers_cards)
+  deal_cards(players_cards, dealers_cards, false)
   player_card_count = card_count(players_cards)
   dealer_card_count = card_count(dealers_cards)
   deck_index = 4
-  while player_card_count < 21
-    action = hit_or_stand
-    if action == 1
-      players_cards << shuffled_keys[deck_index]
-      player_card_count = card_count(players_cards)
-      deal_cards(players_cards, dealers_cards)
-      deck_index += 1
-    else
-      break
+  
+
+  blackjack = false
+  # check for blackjack
+  if deck_index == 4 && player_card_count == 21
+    puts "BlackJack!!!"
+    blackjack = true
+  else
+    #players turn
+    while player_card_count < 21
+      action = hit_or_stand
+      if action == 1
+        players_cards << shuffled_keys[deck_index]
+        player_card_count = card_count(players_cards)
+        deal_cards(players_cards, dealers_cards, false)
+        deck_index += 1
+      else
+        break
+      end
     end
   end
-
-  if player_card_count == 21
-    puts "Congrats"
-    if deck_index == 4
-      puts "BlackJack!!!"
-    end
+  
+  if player_card_count > 21
+    deal_cards(players_cards, dealers_cards)
+    puts "Bust! Dealer Shows cards."
+  else
+    # dealers turn
     while dealer_card_count < 17
       dealers_cards << shuffled_keys[deck_index]
       dealer_card_count = card_count(dealers_cards)
       deck_index += 1
     end
-    if dealer_card_count == 21
-      deal_cards(players_cards, dealers_cards, true)
+    if dealer_card_count > 21
+      deal_cards(players_cards, dealers_cards)
+      puts "Dealer busts! You Win"
+      chip_count += ( blackjack ) ? 1.5 * bet : bet
+    elsif player_card_count == dealer_card_count
+      deal_cards(players_cards, dealers_cards)
       puts "Dealer draws #{dealer_card_count}"
       puts "It's a Tie!"
-      # chip count doesn't change
-    elsif dealer_card_count > 21
-      deal_cards(players_cards, dealers_cards, true)
-      puts "Dealer busts! You Win"
-      chip_count += 1.5 * bet
-    else
-      deal_cards(players_cards, dealers_cards, true)
-      puts "You Win"
-      chip_count += 1.5 * bet
-    end
-  elsif player_card_count > 21
-    deal_cards(players_cards, dealers_cards, true)
-    puts "Bust! Dealer shows cards"
-    chip_count -= bet
+    # chip count doesn't change
+  end
+
   elsif player_card_count > dealer_card_count
-    deal_cards(players_cards, dealers_cards, true)
+    deal_cards(players_cards, dealers_cards)
     puts "You Win!"
     chip_count += bet
   else
-    deal_cards(players_cards, dealers_cards, true)
+    deal_cards(players_cards, dealers_cards)
     puts "You Lose! The House always wins! HaHaHa.."
-
+    chip_count -= bet
   end
   puts "Chip count: #{chip_count}"
   if chip_count == 0
