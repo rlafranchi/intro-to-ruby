@@ -157,7 +157,7 @@ begin
 
   blackjack = false
   # check for blackjack
-  if deck_index == 4 && player_card_count == 21
+  if player_card_count == 21
     puts "BlackJack!!!"
     blackjack = true
   else
