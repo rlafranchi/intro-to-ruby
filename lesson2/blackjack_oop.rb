@@ -1,35 +1,4 @@
-require 'pry'
-# psuedo code
-# create deck and shuffle it
-# dealer welcome and buy chips
-# max and min bets
-# make bet
-# deal cards
-# only show players cards and one of dealers cards
-# players turn - ask to hit or stand
-# check for blackjack - pays 3 to 2
-#   dealers turn
-#
-# if hit
-#   if bust
-#     lose
-#   elsif 21
-#     dealers turn
-#   else
-#     ask to hit or stand again
-# elsif stand
-#   dealers turn
-#
-# dealers turn
-# while less than 17
-#   hit
-# end
-# if bust
-#   player wins
-#   pay chips
-# else
-#   compare players and dealers cards
-#   exchange chips accordingly - tie 1:1 - otherwise 2:1
+# first attempt at oop blackjack game with single class
 
 class BlackJack
   attr_accessor :deck, :dealers_cards, :players_cards, :chip_count
@@ -61,32 +30,14 @@ class BlackJack
         end
       end
     end
-    self.deck = deck
+    shuffle_deck
   end
 
   def shuffle_deck
-    return self.deck.keys.shuffle
+    deck.keys.shuffle
   end
-
-  def buy_chips
-    puts "How many chips would you like to buy?"
-    chips = gets.chomp.to_f
-    self.chip_count = chips
-  end
-
-  def make_bet
-    puts "Place your bet:"
-    bet = gets.chomp.to_f
-    until bet >= self.chip_count
-      puts "You don't have enough chips to play. Make a smaller bet:"
-      bet = gets.chomp.to_f
-    end
-    return bet
-  end
-
 
   def card_count(cards)
-    deck = create_deck
     v = 0
     cards.each do |k|
       v += deck[k]
@@ -108,16 +59,16 @@ class BlackJack
     puts "----Dealer's Cards----"
 
     if dealers_turn
-      self.dealers_cards.each do |card|
+      dealers_cards.each do |card|
         puts "  ------"
         puts "  | #{card} |"
         puts "  |    |"
         puts "  ------"
       end
-      puts "Dealers total is: " + card_count(self.dealers_cards).to_s
+      puts "Dealers total is: " + card_count(dealers_cards).to_s
     else
       puts "  ------"
-      puts "  | #{self.dealers_cards[1]} |"
+      puts "  | #{dealers_cards[1]} |"
       puts "  |    |"
       puts "  ------"
       puts "  ------"
@@ -128,26 +79,46 @@ class BlackJack
 
     puts "----Your Cards--------"
 
-    self.players_cards.each do |card|
+    players_cards.each do |card|
       puts "  ------"
       puts "  | #{card} |"
       puts "  |    |"
       puts "  ------"
     end
 
-    puts "your total is: " + card_count(self.players_cards).to_s
+    puts "your total is: " + card_count(players_cards).to_s
+  end
+
+  def buy_chips
+    puts "How many chips would you like to buy?"
+    chips = gets.chomp.to_f
+    self.chip_count = chips
+  end
+
+  def make_bet
+    puts "Place your bet:"
+    bet = gets.chomp.to_f
+    until bet <= self.chip_count
+      puts "You don't have enough chips to play. Make a smaller bet:"
+      bet = gets.chomp.to_f
+    end
+    return bet
   end
 
   def hit_or_stand
     puts "Would you like to 1) hit or 2) stand."
     action = gets.chomp.to_i
+    until action == 1 || action == 2
+      puts "Pleas enter 1 to hit or 2 to stand."
+      action = gets.chomp.to_i
+    end
     return action
   end
 
   def play
-    self.create_deck
+    create_deck
     puts "Welcome to Las Vegas"
-    self.buy_chips
+    buy_chips
 
     # begin playing until game_over
     begin
@@ -157,8 +128,8 @@ class BlackJack
       self.players_cards = [shuffled_keys[0], shuffled_keys[2]]
       self.dealers_cards = [shuffled_keys[1], shuffled_keys[3]]
 
-      bet = make_bet(chip_count).to_f
-      deal_cards(self.players_cards, self.dealers_cards, false)
+      bet = make_bet.to_f
+      deal_cards(false)
       player_card_count = card_count(self.players_cards)
       dealer_card_count = card_count(self.dealers_cards)
       deck_index = 4
@@ -175,7 +146,7 @@ class BlackJack
           action = self.hit_or_stand
           if action == 1
             players_cards << shuffled_keys[deck_index]
-            self.player_card_count = card_count(self.players_cards)
+            player_card_count = card_count(self.players_cards)
             deal_cards(false)
             deck_index += 1
           else
@@ -185,33 +156,33 @@ class BlackJack
       end
 
       if player_card_count > 21
-        deal_cards(self.players_cards, self.dealers_cards)
+        deal_cards
         puts "Bust! Dealer Shows cards."
-        chip_count -= bet
+        self.chip_count -= bet
       else
         # dealers turn
         while dealer_card_count < 17
           self.dealers_cards << shuffled_keys[deck_index]
-          self.dealer_card_count = card_count(self.dealers_cards)
+          dealer_card_count = card_count(self.dealers_cards)
           deck_index += 1
         end
-        self.deal_cards(self.players_cards, self.dealers_cards)
-        if self.dealer_card_count > 21
-          puts "Dealer draws #{self.dealer_card_count}"
+        self.deal_cards
+        if dealer_card_count > 21
+          puts "Dealer draws #{dealer_card_count}"
           puts "Dealer busts! You Win"
-          chip_count += ( blackjack ) ? 1.5 * bet : bet
+          self.chip_count += ( blackjack ) ? 1.5 * bet : bet
         elsif player_card_count == dealer_card_count
-          puts "Dealer draws #{self.dealer_card_count}"
+          puts "Dealer draws #{dealer_card_count}"
           puts "It's a Tie!"
           # chip count doesn't change
         elsif player_card_count > dealer_card_count
           puts "Dealer draws #{dealer_card_count}"
           puts "You Win!"
-          chip_count += ( blackjack ) ? 1.5 * bet : bet
+          self.chip_count += ( blackjack ) ? 1.5 * bet : bet
         elsif player_card_count < dealer_card_count
           puts "Dealer draws #{dealer_card_count}"
           puts "You Lose! The House always wins! HaHaHa.."
-          chip_count -= bet
+          self.chip_count -= bet
         end
       end
 
@@ -231,3 +202,6 @@ class BlackJack
 end
 
 game = BlackJack.new
+game.play
+
+puts "You cashed out with #{game.chip_count} chips"
